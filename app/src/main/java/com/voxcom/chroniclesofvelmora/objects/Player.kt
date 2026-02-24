@@ -1,10 +1,9 @@
 package com.voxcom.chroniclesofvelmora.objects
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import com.voxcom.chroniclesofvelmora.R
 import com.voxcom.chroniclesofvelmora.utils.Camera
 
@@ -14,53 +13,98 @@ class Player(
     var worldY: Float
 ) {
 
-    private val bitmap = BitmapFactory.decodeResource(
+    private val originalBitmap = BitmapFactory.decodeResource(
         context.resources,
         R.drawable.sample_player
+    )
+
+    private val bitmap: Bitmap = Bitmap.createScaledBitmap(
+        originalBitmap,
+        120,
+        120,
+        false
     )
 
     private val width = bitmap.width.toFloat()
     private val height = bitmap.height.toFloat()
 
-    var speed = 12f
-    var moveLeft = false
-    var moveRight = false
+    // Movement tuning
+    private val moveAcceleration = 800f
+    private val maxSpeed = 400f
+    private val airControlFactor = 0.8f
 
-    // PHYSICS
+    private val gravity = 1400f
+    private val jetpackForce = -300f
+
+    private var velocityX = 0f
     private var velocityY = 0f
-    private val gravity = 1.2f
-    private val jumpPower = -25f
-    private val groundY = 900f
+
     private var isOnGround = false
 
-    fun update() {
+    fun update(
+        deltaTime: Float,
+        platforms: List<Platform>,
+        moveX: Float,
+        moveY: Float
+    ) {
 
-        // Horizontal
-        if (moveLeft) worldX -= speed
-        if (moveRight) worldX += speed
+        // -------- HORIZONTAL PHYSICS --------
 
-        // Apply gravity
-        velocityY += gravity
-        worldY += velocityY
+        val controlFactor = if (isOnGround) 1f else airControlFactor
 
-        // Ground collision
-        if (worldY + height >= groundY) {
-            worldY = groundY - height
-            velocityY = 0f
-            isOnGround = true
+        velocityX += moveX * moveAcceleration * controlFactor * deltaTime
+
+        // Clamp horizontal speed
+        velocityX = velocityX.coerceIn(-maxSpeed, maxSpeed)
+
+        // -------- VERTICAL PHYSICS --------
+
+        if (moveY < -0.2f) {
+            velocityY += jetpackForce * deltaTime
         } else {
-            isOnGround = false
+            velocityY += gravity * deltaTime
         }
 
-        // World boundary
+        // -------- APPLY MOVEMENT --------
+
+        worldX += velocityX * deltaTime
+        worldY += velocityY * deltaTime
+
+        isOnGround = false
+
+        // -------- PLATFORM COLLISION --------
+
+        for (platform in platforms) {
+
+            val playerBottom = worldY + height
+            val playerTop = worldY
+            val playerRight = worldX + width
+            val playerLeft = worldX
+
+            val platformTop = platform.y
+            val platformLeft = platform.x
+            val platformRight = platform.x + platform.width
+
+            if (
+                playerBottom >= platformTop &&
+                playerTop < platformTop &&
+                playerRight > platformLeft &&
+                playerLeft < platformRight &&
+                velocityY >= 0
+            ) {
+                worldY = platformTop - height
+                velocityY = 0f
+                isOnGround = true
+            }
+        }
+
+        // -------- FRICTION (Ground only) --------
+        if (isOnGround && moveX == 0f) {
+            velocityX *= 0.8f
+        }
+
+        // -------- WORLD BOUNDS --------
         worldX = worldX.coerceIn(0f, 3000f - width)
-    }
-
-    fun jump() {
-        if (isOnGround) {
-            velocityY = jumpPower
-            isOnGround = false
-        }
     }
 
     fun draw(canvas: Canvas, camera: Camera) {
