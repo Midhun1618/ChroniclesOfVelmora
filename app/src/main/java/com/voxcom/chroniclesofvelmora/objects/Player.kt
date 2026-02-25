@@ -48,7 +48,7 @@ class Player(
         moveY: Float
     ) {
 
-        // -------- HORIZONTAL PHYSICS --------
+        // ---------------- INPUT ----------------
 
         val controlFactor = if (isOnGround) 1f else airControlFactor
 
@@ -57,54 +57,73 @@ class Player(
         // Clamp horizontal speed
         velocityX = velocityX.coerceIn(-maxSpeed, maxSpeed)
 
-        // -------- VERTICAL PHYSICS --------
-
+        // Jetpack / Gravity
         if (moveY < -0.2f) {
             velocityY += jetpackForce * deltaTime
         } else {
             velocityY += gravity * deltaTime
         }
 
-        // -------- APPLY MOVEMENT --------
+        // ---------------- HORIZONTAL MOVE ----------------
 
         worldX += velocityX * deltaTime
-        worldY += velocityY * deltaTime
-
-        isOnGround = false
-
-        // -------- PLATFORM COLLISION --------
 
         for (platform in platforms) {
 
-            val playerBottom = worldY + height
-            val playerTop = worldY
-            val playerRight = worldX + width
-            val playerLeft = worldX
+            if (isColliding(platform)) {
 
-            val platformTop = platform.y
-            val platformLeft = platform.x
-            val platformRight = platform.x + platform.width
+                if (velocityX > 0) {
+                    worldX = platform.x - width
+                } else if (velocityX < 0) {
+                    worldX = platform.x + platform.width
+                }
 
-            if (
-                playerBottom >= platformTop &&
-                playerTop < platformTop &&
-                playerRight > platformLeft &&
-                playerLeft < platformRight &&
-                velocityY >= 0
-            ) {
-                worldY = platformTop - height
-                velocityY = 0f
-                isOnGround = true
+                velocityX = 0f
             }
         }
 
-        // -------- FRICTION (Ground only) --------
+        // ---------------- VERTICAL MOVE ----------------
+
+        worldY += velocityY * deltaTime
+        isOnGround = false
+
+        for (platform in platforms) {
+
+            if (isColliding(platform)) {
+
+                if (velocityY > 0) {
+                    worldY = platform.y - height
+                    isOnGround = true
+                } else if (velocityY < 0) {
+                    worldY = platform.y + platform.height
+                }
+
+                velocityY = 0f
+            }
+        }
+
+        // ---------------- FRICTION ----------------
+
         if (isOnGround && moveX == 0f) {
             velocityX *= 0.8f
         }
+    }
+    private fun isColliding(platform: Platform): Boolean {
 
-        // -------- WORLD BOUNDS --------
-        worldX = worldX.coerceIn(0f, 3000f - width)
+        val playerLeft = worldX
+        val playerRight = worldX + width
+        val playerTop = worldY
+        val playerBottom = worldY + height
+
+        val platLeft = platform.x
+        val platRight = platform.x + platform.width
+        val platTop = platform.y
+        val platBottom = platform.y + platform.height
+
+        return playerRight > platLeft &&
+                playerLeft < platRight &&
+                playerBottom > platTop &&
+                playerTop < platBottom
     }
 
     fun draw(canvas: Canvas, camera: Camera) {

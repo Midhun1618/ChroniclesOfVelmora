@@ -3,7 +3,7 @@ package com.voxcom.chroniclesofvelmora.utils
 import android.content.res.Resources
 import com.voxcom.chroniclesofvelmora.objects.Player
 
-class Camera {
+class Camera(private val mapWidth: Float, private val mapHeight: Float) {
 
     var cameraX = 0f
     var cameraY = 0f
@@ -16,12 +16,10 @@ class Camera {
         val targetX = player.worldX - screenWidth / 2
         val targetY = player.worldY - screenHeight / 2
 
-        // Smooth follow
         cameraX += (targetX - cameraX) * 0.1f
         cameraY += (targetY - cameraY) * 0.1f
 
-        // Clamp inside world
-        cameraX = cameraX.coerceIn(0f, 3000f - screenWidth)
-        cameraY = cameraY.coerceIn(0f, 1800f - screenHeight)
+        cameraX = cameraX.coerceIn(0f, mapWidth - screenWidth)
+        cameraY = cameraY.coerceIn(0f, mapHeight - screenHeight)
     }
 }
