@@ -19,10 +19,12 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private lateinit var player: Player
     private lateinit var camera: Camera
     private lateinit var background: Bitmap
-
+    private lateinit var bgFar: Bitmap
+    private lateinit var bgMid: Bitmap
     private val platforms = mutableListOf<Platform>()
-
     private lateinit var leftJoystick: Joystick
+    private val mapWidth = 3000f
+    private val mapHeight = 1800f
 
     init {
         holder.addCallback(this)
@@ -32,22 +34,64 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         gameLoop = GameLoop(this, holder)
 
         background = BitmapFactory.decodeResource(resources, R.drawable.backdrop_basic)
+        bgFar = BitmapFactory.decodeResource(resources, R.drawable.bgfar)
+        bgMid = BitmapFactory.decodeResource(resources, R.drawable.midbg)
 
-        // Ground aligned to background
-        val groundY = background.height - 100f
-        platforms.add(Platform(0f, groundY, 3000f, 100f))
+        background = Bitmap.createScaledBitmap(
+            background,
+            mapWidth.toInt(),
+            mapHeight.toInt(),
+            false
+        )
+        bgFar = Bitmap.createScaledBitmap(
+            bgFar,
+            mapWidth.toInt(),
+            mapHeight.toInt(),
+            false
+        )
 
-        // Floating platforms
-        platforms.add(Platform(400f, 800f, 300f, 40f))
-        platforms.add(Platform(900f, 650f, 300f, 40f))
-        platforms.add(Platform(1400f, 500f, 300f, 40f))
-        platforms.add(Platform(1900f, 700f, 300f, 40f))
-        platforms.add(Platform(2400f, 600f, 300f, 40f))
-    }
+        bgMid = Bitmap.createScaledBitmap(
+            bgMid,
+            mapWidth.toInt(),
+            mapHeight.toInt(),
+            false
+        )
+        platforms.add(
+            Platform(
+                context,
+                0f,
+                mapHeight - 100f,
+                mapWidth,
+                100f,
+                R.drawable.txtr_basetile
+            )
+        )
+
+// Left wall
+        platforms.add(
+            Platform(
+                context,
+                0f,
+                0f,
+                100f,
+                mapHeight,
+                R.drawable.grey_brick
+            )
+        )
+
+// Floating platform
+        platforms.add(
+            Platform(
+                context,
+                1300f,
+                850f,
+                400f,
+                60f,
+                R.drawable.brown_brick
+            )
+        )}
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-
-        val screenWidth = width.toFloat()
         val screenHeight = height.toFloat()
 
         leftJoystick = Joystick(
@@ -87,10 +131,18 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
         canvas.drawColor(Color.BLACK)
 
-        val bgX = -camera.cameraX
-        val bgY = -camera.cameraY
+        // Parallax offsets
+        val farX = -camera.cameraX * 0.3f
+        val farY = -camera.cameraY * 0.3f
 
-        canvas.drawBitmap(background, bgX, bgY, null)
+        val midX = -camera.cameraX * 0.6f
+        val midY = -camera.cameraY * 0.6f
+
+        // Draw far layer
+        canvas.drawBitmap(bgFar, farX, farY, null)
+
+        // Draw mid layer
+        canvas.drawBitmap(bgMid, midX, midY, null)
 
         // Platforms
         for (platform in platforms) {
@@ -100,7 +152,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         // Player
         player.draw(canvas, camera)
 
-        // Draw joysticks ON TOP
+        // Joystick
         leftJoystick.draw(canvas)
     }
 
