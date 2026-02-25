@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import com.voxcom.chroniclesofvelmora.objects.Enemy
 import com.voxcom.chroniclesofvelmora.objects.Joystick
 import com.voxcom.chroniclesofvelmora.objects.Platform
 import com.voxcom.chroniclesofvelmora.objects.Player
@@ -21,6 +22,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
     private lateinit var bgFar: Bitmap
     private lateinit var bgMid: Bitmap
+
+    private val enemies = mutableListOf<Enemy>()
 
     private val platforms = mutableListOf<Platform>()
     private lateinit var leftJoystick: Joystick
@@ -356,6 +359,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                 R.drawable.texture
             )
         )
+        enemies.add(Enemy(context, 1200f, 200f))
+        enemies.add(Enemy(context, 2700f, mapHeight - floorThickness-1800f))
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -384,9 +389,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
         player.update(deltaTime, platforms, moveX, moveY)
         camera.update(player)
-    }
-    private fun dp(value: Float): Float {
-        return value * resources.displayMetrics.density
+        for (enemy in enemies) {
+            enemy.update(deltaTime, platforms)
+        }
     }
 
     override fun draw(canvas: Canvas) {
@@ -401,6 +406,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         // Platforms
         for (platform in platforms) {
             platform.draw(canvas, camera)
+        }
+        for (enemy in enemies) {
+            enemy.draw(canvas, camera)
         }
 
         // Player
