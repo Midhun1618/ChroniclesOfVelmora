@@ -25,7 +25,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private val platforms = mutableListOf<Platform>()
     private lateinit var leftJoystick: Joystick
 
-    private val mapWidth = 4330f
+    private val mapWidth = 6330f
     private val mapHeight = 4200f
 
     init {
@@ -58,51 +58,303 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
     private fun createArena(context: Context) {
 
-        val floorHeight = 150f
+        val wallThickness = 100f
+        val floorThickness = 150f
+        val platformThickness = 50f
+
+        // ================= OUTER BORDERS =================
 
         // FLOOR
         platforms.add(
-            Platform(context, 0f, mapHeight - floorHeight, mapWidth, floorHeight, R.drawable.txtr_basetile)
+            Platform(
+                context,
+                0f,
+                mapHeight - floorThickness,
+                mapWidth,
+                floorThickness,
+                R.drawable.txtr_basetile
+            )
+        )
+
+        // CEILING
+        platforms.add(
+            Platform(
+                context,
+                0f,
+                0f,
+                mapWidth,
+                wallThickness,
+                R.drawable.txtr_woodenfloor
+            )
         )
 
         // LEFT WALL
         platforms.add(
-            Platform(context, 0f, 0f, 150f, mapHeight, R.drawable.txtr_basetile)
+            Platform(
+                context,
+                0f,
+                0f,
+                wallThickness,
+                mapHeight,
+                R.drawable.texture
+            )
         )
 
         // RIGHT WALL
         platforms.add(
-            Platform(context, mapWidth - 150f, 0f, 150f, mapHeight, R.drawable.txtr_basetile)
+            Platform(
+                context,
+                mapWidth - wallThickness,
+                0f,
+                wallThickness,
+                mapHeight,
+                R.drawable.texture
+            )
         )
 
-        // MID LEVELS
+        // ================= SAMPLE PLATFORM =================
 
         platforms.add(
-            Platform(context, 500f, 3400f, 800f, 80f, R.drawable.txtr_basetile)
+            // platform10
+            Platform(
+                context,
+                100f,     // X
+                mapHeight - floorThickness-400f,
+                300f,      // width
+                platformThickness,       // height
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform11
+            Platform(
+                context,
+                700f,
+                mapHeight - floorThickness-400f,
+                800f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform12
+            Platform(
+                context,
+                100f,
+                mapHeight - floorThickness-800f,
+                700f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform13
+            Platform(
+                context,
+                1100f,
+                mapHeight - floorThickness-800f,
+                400f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform14
+            Platform(
+                context,
+                100f,
+                mapHeight - floorThickness-1200f,
+                1100f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform15
+            Platform(
+                context,
+                100f,
+                mapHeight - floorThickness-1600f,
+                400f,
+                platformThickness,
+                R.drawable.texture
+            )
         )
 
         platforms.add(
-            Platform(context, 2500f, 3400f, 800f, 80f, R.drawable.txtr_basetile)
+            Platform(
+                context,
+                1500f,
+                mapHeight - floorThickness-1200f,
+                platformThickness,
+                900f,
+                R.drawable.texture
+            )
         )
-
         platforms.add(
-            Platform(context, 900f, 2600f, 600f, 80f, R.drawable.txtr_basetile)
+            // platform9
+            Platform(
+                context,
+                2100f,
+                mapHeight - floorThickness-500f,
+                500f,
+                platformThickness,
+                R.drawable.texture
+            )
         )
-
         platforms.add(
-            Platform(context, 2200f, 2600f, 600f, 80f, R.drawable.txtr_basetile)
+            // platform8
+            Platform(
+                context,
+                2400f,
+                mapHeight - floorThickness-1200f,
+                200f,
+                platformThickness,
+                R.drawable.texture
+            )
         )
-
         platforms.add(
-            Platform(context, mapWidth / 2 - 400f, 1800f, 800f, 80f, R.drawable.txtr_basetile)
+            // platform7
+            Platform(
+                context,
+                2600f,
+                mapHeight - floorThickness-1700f,
+                400f,
+                platformThickness,
+                R.drawable.texture
+            )
         )
-
         platforms.add(
-            Platform(context, 700f, 1000f, 400f, 80f, R.drawable.txtr_basetile)
+            //wall
+            Platform(
+                context,
+                2600f,
+                mapHeight - floorThickness-1650f,
+                400f,
+                1700f,
+                R.drawable.texture
+            )
         )
-
         platforms.add(
-            Platform(context, 2700f, 1000f, 400f, 80f, R.drawable.txtr_basetile)
+            //wall1
+            Platform(
+                context,
+                mapWidth-wallThickness-900,
+                mapHeight - floorThickness-2000f,
+                platformThickness,
+                1700f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //wall2
+            Platform(
+                context,
+                mapWidth-wallThickness-2300f,
+                mapHeight - floorThickness-2000f,
+                platformThickness,
+                2000f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform6
+            Platform(
+                context,
+                mapWidth-wallThickness-2300f,
+                mapHeight - floorThickness-2000f,
+                1400f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //wall3
+            Platform(
+                context,
+                mapWidth-wallThickness-1900f,
+                mapHeight - floorThickness-1600f,
+                platformThickness,
+                500f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //wall4
+            Platform(
+                context,
+                mapWidth-wallThickness-1600f,
+                mapHeight - floorThickness-1600f,
+                platformThickness,
+                500f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //wall5
+            Platform(
+                context,
+                mapWidth-wallThickness-1300f,
+                mapHeight - floorThickness-1600f,
+                platformThickness,
+                800f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform4
+            Platform(
+                context,
+                mapWidth-wallThickness-1500f,
+                mapHeight - floorThickness-1600f,
+                300f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform3
+            Platform(
+                context,
+                mapWidth-wallThickness-1900f,
+                mapHeight - floorThickness-1100f,
+                300f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            // platform1
+            Platform(
+                context,
+                mapWidth-wallThickness-1800f,
+                mapHeight - floorThickness-400f,
+                900f,
+                platformThickness,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //wall3
+            Platform(
+                context,
+                mapWidth-wallThickness-1900f,
+                mapHeight - floorThickness-800f,
+                platformThickness,
+                400f,
+                R.drawable.texture
+            )
+        )
+        platforms.add(
+            //platform2
+            Platform(
+                context,
+                mapWidth-wallThickness-1900f,
+                mapHeight - floorThickness-800f,
+                700f,
+                platformThickness,
+                R.drawable.texture
+            )
         )
     }
 

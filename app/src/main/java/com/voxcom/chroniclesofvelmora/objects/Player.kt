@@ -20,8 +20,8 @@ class Player(
 
     private val bitmap: Bitmap = Bitmap.createScaledBitmap(
         originalBitmap,
-        120,
-        120,
+        200,
+        200,
         false
     )
 
