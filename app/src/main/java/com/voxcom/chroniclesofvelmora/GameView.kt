@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.voxcom.chroniclesofvelmora.objects.Enemy
+import com.voxcom.chroniclesofvelmora.objects.EnemyBullet
 import com.voxcom.chroniclesofvelmora.objects.Joystick
 import com.voxcom.chroniclesofvelmora.objects.Platform
 import com.voxcom.chroniclesofvelmora.objects.Player
@@ -28,6 +29,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private val strike = mutableListOf<Strike>()
     private val platforms = mutableListOf<Platform>()
     private lateinit var leftJoystick: Joystick
+    private val enemyBullets = mutableListOf<EnemyBullet>()
 
     private val mapWidth = 6330f
     private val mapHeight = 4200f
@@ -397,7 +399,11 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         player.update(deltaTime, platforms, moveX, moveY)
         camera.update(player)
         for (enemy in enemies) {
-            enemy.update(deltaTime, platforms)
+            enemy.update(deltaTime, platforms, player) { x, y, direction ->
+                enemyBullets.add(
+                    EnemyBullet(context, x, y, direction)
+                )
+            }
         }
 
         val iterator = strike.iterator()
@@ -431,6 +437,28 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             if (reloadTimer >= reloadTime) {
                 currentAmmo = maxAmmo
                 isReloading = false
+            }
+        }
+        val bulletIterator = enemyBullets.iterator()
+
+        while (bulletIterator.hasNext()) {
+
+            val bullet = bulletIterator.next()
+            bullet.update(deltaTime)
+
+            // Hit player
+            if (bullet.isCollidingWithPlayer(player)) {
+                player.takeDamage(10)
+                bulletIterator.remove()
+                continue
+            }
+
+            // Hit platform
+            for (platform in platforms) {
+                if (bullet.isCollidingWithPlatform(platform)) {
+                    bulletIterator.remove()
+                    break
+                }
             }
         }
     }
@@ -471,6 +499,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
         val paintHp = android.graphics.Paint().apply {
             color = android.graphics.Color.RED
+        }
+        for (bullet in enemyBullets) {
+            bullet.draw(canvas, camera)
         }
 
 // Background

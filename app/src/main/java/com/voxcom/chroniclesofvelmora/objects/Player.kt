@@ -14,7 +14,8 @@ class Player(
 ) {
     private var walkIndex = 0
     private var walkTimer = 0f
-    private val walkSpeed = 0.08f   // smaller = faster animation
+    private val minAnimSpeed = 0.16f   // slow walking
+    private val maxAnimSpeed = 0.08f   // fast running
 
     // -------- IDLE BODY --------
     private val idleBody = Bitmap.createScaledBitmap(
@@ -192,18 +193,29 @@ class Player(
             facingRight = false
         }
 
-        val isMoving = kotlin.math.abs(moveX) > 0.1f && isOnGround
+
+        val speedAbs = kotlin.math.abs(velocityX)
+        val isMoving = speedAbs > 5f && isOnGround
 
         if (isMoving) {
+
+            // Normalize speed (0 → maxSpeed)
+            val speedRatio = (speedAbs / maxSpeed).coerceIn(0f, 1f)
+
+            // Interpolate animation speed
+            val dynamicAnimSpeed =
+                minAnimSpeed - (minAnimSpeed - maxAnimSpeed) * speedRatio
+
             walkTimer += deltaTime
 
-            if (walkTimer >= walkSpeed) {
+            if (walkTimer >= dynamicAnimSpeed) {
                 walkIndex++
                 if (walkIndex >= walkFrames.size) {
                     walkIndex = 0
                 }
                 walkTimer = 0f
             }
+
         } else {
             walkIndex = 0
             walkTimer = 0f
