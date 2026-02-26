@@ -60,6 +60,17 @@ class Player(
         Bitmap.createScaledBitmap(
             BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt03),
             140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt03),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt02),
+            140, 220, false
+        ),Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt01),
+            140, 220, false
         )
     )
 
