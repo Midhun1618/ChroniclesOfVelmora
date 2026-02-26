@@ -20,16 +20,16 @@ class Strike(
 
     // ----- LOAD 2 FRAMES -----
     private val frame1 = Bitmap.createScaledBitmap(
-        BitmapFactory.decodeResource(context.resources, R.drawable.strike_flame1),
+        BitmapFactory.decodeResource(context.resources, R.drawable.strike),
         60,
         20,
         false
     )
 
     private val frame2 = Bitmap.createScaledBitmap(
-        BitmapFactory.decodeResource(context.resources, R.drawable.strike_flame2),
-        120,
-        40,
+        BitmapFactory.decodeResource(context.resources, R.drawable.strike2),
+        60,
+        20,
         false
     )
 
@@ -39,7 +39,7 @@ class Strike(
 
     // Animation control
     private var animationTimer = 0f
-    private val animationSpeed = 0.2f  // smaller = faster switching
+    private val animationSpeed = 0.1f  // smaller = faster switching
 
     fun update(deltaTime: Float) {
 
@@ -63,10 +63,10 @@ class Strike(
         val matrix = Matrix()
 
         if (direction < 0) {
+            matrix.postTranslate(screenX, screenY)
+        } else {
             matrix.preScale(-1f, 1f)
             matrix.postTranslate(screenX + width, screenY)
-        } else {
-            matrix.postTranslate(screenX, screenY)
         }
 
         canvas.drawBitmap(currentFrame, matrix, null)
