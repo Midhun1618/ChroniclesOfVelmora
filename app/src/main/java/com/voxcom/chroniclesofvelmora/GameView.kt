@@ -10,6 +10,7 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.voxcom.chroniclesofvelmora.objects.Enemy
 import com.voxcom.chroniclesofvelmora.objects.EnemyBullet
+import com.voxcom.chroniclesofvelmora.objects.ExplosionParticle
 import com.voxcom.chroniclesofvelmora.objects.Joystick
 import com.voxcom.chroniclesofvelmora.objects.Platform
 import com.voxcom.chroniclesofvelmora.objects.Player
@@ -28,6 +29,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private val enemies = mutableListOf<Enemy>()
     private val strike = mutableListOf<Strike>()
     private val platforms = mutableListOf<Platform>()
+    private val particles = mutableListOf<ExplosionParticle>()
     private lateinit var leftJoystick: Joystick
     private val enemyBullets = mutableListOf<EnemyBullet>()
 
@@ -405,6 +407,16 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                 )
             }
         }
+        val particleIterator = particles.iterator()
+
+        while (particleIterator.hasNext()) {
+            val p = particleIterator.next()
+            p.update(deltaTime)
+
+            if (p.isDead) {
+                particleIterator.remove()
+            }
+        }
 
         val iterator = strike.iterator()
         while (iterator.hasNext()) {
@@ -422,6 +434,15 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             for (enemy in enemies) {
                 if (strike.isCollidingWithEnemy(enemy)) {
                     enemy.kill()
+
+                    repeat(30) {
+                        particles.add(
+                            ExplosionParticle(
+                                enemy.worldX + 50f,
+                                enemy.worldY + 120f
+                            )
+                        )
+                    }
                     strike.isActive = false
                     break
                 }
@@ -550,6 +571,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                 190f,
                 ammoPaint
             )
+        }
+        for (p in particles) {
+            p.draw(canvas, camera)
         }
     }
 
