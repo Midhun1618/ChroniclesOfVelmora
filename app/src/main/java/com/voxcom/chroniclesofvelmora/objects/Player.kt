@@ -48,6 +48,20 @@ class Player(
             140, 220, false
         )
     )
+    private val hitFrames = listOf(
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt01),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt02),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.base_hurt03),
+            140, 220, false
+        )
+    )
 
     private val armBitmap = Bitmap.createScaledBitmap(
         BitmapFactory.decodeResource(context.resources, R.drawable.basehandgun),
@@ -88,6 +102,14 @@ class Player(
 
     private val width = idleBody.width.toFloat()
     private val height = idleBody.height.toFloat()
+    private enum class State { NORMAL, HIT }
+
+    private var state = State.NORMAL
+
+    private var hitIndex = 0
+    private var hitTimer = 0f
+    private val hitAnimSpeed = 0.08f
+
 
 
     // Movement tuning
@@ -220,6 +242,23 @@ class Player(
             walkIndex = 0
             walkTimer = 0f
         }
+
+// -------- HIT ANIMATION --------
+        if (state == State.HIT) {
+
+            hitTimer += deltaTime
+
+            if (hitTimer >= hitAnimSpeed) {
+                hitIndex++
+                hitTimer = 0f
+
+                if (hitIndex >= hitFrames.size) {
+                    state = State.NORMAL
+                }
+            }
+
+            return  // Skip normal animation while hit
+        }
     }
 
 
@@ -227,8 +266,13 @@ class Player(
     var currentHealth = 100
 
     fun takeDamage(amount: Int) {
+
         currentHealth -= amount
         if (currentHealth < 0) currentHealth = 0
+
+        state = State.HIT
+        hitIndex = 0
+        hitTimer = 0f
     }
 
     fun isDead(): Boolean {
@@ -259,6 +303,7 @@ class Player(
 
         canvas.save()
 
+
         if (!facingRight) {
             // Flip horizontally
             canvas.scale(
@@ -279,10 +324,15 @@ class Player(
         canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
 
         // -------- BODY --------
-        val bodyToDraw = if (kotlin.math.abs(velocityX) > 10f && isOnGround) {
-            walkFrames[walkIndex]
-        } else {
-            idleBody
+        val bodyToDraw = when (state) {
+            State.HIT -> hitFrames[hitIndex]
+            else -> {
+                if (kotlin.math.abs(velocityX) > 10f && isOnGround) {
+                    walkFrames[walkIndex]
+                } else {
+                    idleBody
+                }
+            }
         }
 
         canvas.drawBitmap(bodyToDraw, screenX, screenY, null)
@@ -291,6 +341,7 @@ class Player(
         canvas.drawBitmap(armBitmap, screenX, screenY, null)
 
         canvas.restore()
+
     }
     fun getFacingDirection(): Float {
         return if (velocityX >= 0f) 1f else -1f
