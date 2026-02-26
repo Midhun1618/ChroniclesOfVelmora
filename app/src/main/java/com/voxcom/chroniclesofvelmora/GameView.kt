@@ -25,6 +25,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
     private lateinit var bgFar: Bitmap
     private lateinit var bgMid: Bitmap
+    private var spawnTimer = 0f
+    private val spawnInterval = 15f
 
     private val enemies = mutableListOf<Enemy>()
     private val strike = mutableListOf<Strike>()
@@ -32,6 +34,19 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private val particles = mutableListOf<ExplosionParticle>()
     private lateinit var leftJoystick: Joystick
     private val enemyBullets = mutableListOf<EnemyBullet>()
+    private fun spawnEnemy() {
+
+        val spawnX = if ((0..1).random() == 0)
+            300f
+        else
+            mapWidth - 300f
+
+        val spawnY = mapHeight - 500f
+
+        enemies.add(
+            Enemy(context, spawnX, spawnY)
+        )
+    }
 
     private val mapWidth = 6330f
     private val mapHeight = 4200f
@@ -415,6 +430,15 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
             if (p.isDead) {
                 particleIterator.remove()
+            }
+        }
+        if (!player.isDead()) {
+
+            spawnTimer += deltaTime
+
+            if (spawnTimer >= spawnInterval) {
+                spawnEnemy()
+                spawnTimer = 0f
             }
         }
 
