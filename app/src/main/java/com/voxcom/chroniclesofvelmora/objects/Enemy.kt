@@ -27,8 +27,30 @@ class Enemy(
         Bitmap.createScaledBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.bot_open3), 105, 240, false),
         Bitmap.createScaledBitmap(BitmapFactory.decodeResource(context.resources, R.drawable.bot_open4), 105, 240, false)
     )
+    private val deathFrames = listOf(
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.bot_dead0),
+            105, 240, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.bot_dead1),
+            105, 240, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.bot_dead2),
+            105, 240, false
+        )
+    )
 
     private var currentFrame: Bitmap = idleFrame
+    private var deathIndex = 0
+    private var deathTimer = 0f
+    private val deathAnimSpeed = 0.08f
+
+    private var fadeTimer = 0f
+    private val fadeDelay = 1f
+    private var alpha = 255
+    var isRemoved = false
 
     private val width = idleFrame.width.toFloat()
     private val height = idleFrame.height.toFloat()
@@ -43,7 +65,7 @@ class Enemy(
     private var facingRight = true
 
     // -------- SHOOTING --------
-    private enum class State { IDLE, SHOOTING }
+    private enum class State { IDLE, SHOOTING ,DEAD}
     private var state = State.IDLE
 
     private var animIndex = 0
@@ -60,6 +82,36 @@ class Enemy(
         player: Player,
         spawnBullet: (Float, Float, Float) -> Unit
     ) {
+        if (state == State.DEAD) {
+
+            // Animate death frames
+            if (deathIndex < deathFrames.size - 1) {
+
+                deathTimer += deltaTime
+
+                if (deathTimer >= deathAnimSpeed) {
+                    deathIndex++
+                    deathTimer = 0f
+                }
+
+            } else {
+
+                // After animation finished
+                fadeTimer += deltaTime
+
+                if (fadeTimer >= fadeDelay) {
+
+                    alpha -= (300 * deltaTime).toInt()
+
+                    if (alpha <= 0) {
+                        alpha = 0
+                        isRemoved = true
+                    }
+                }
+            }
+
+            return
+        }
 
         // ---------- GRAVITY ----------
         velocityY += gravity * deltaTime
@@ -182,8 +234,24 @@ class Enemy(
             canvas.scale(-1f, 1f, screenX + width / 2, 0f)
         }
 
-        canvas.drawBitmap(currentFrame, screenX, screenY, null)
+        val paint = android.graphics.Paint()
+        paint.alpha = alpha
+
+        val frameToDraw =
+            if (state == State.DEAD)
+                deathFrames[deathIndex]
+            else
+                currentFrame
+
+        canvas.drawBitmap(frameToDraw, screenX, screenY, paint)
 
         canvas.restore()
+    }
+    fun kill() {
+        if (state == State.DEAD) return
+        state = State.DEAD
+        deathIndex = 0
+        deathTimer = 0f
+        fadeTimer = 0f
     }
 }

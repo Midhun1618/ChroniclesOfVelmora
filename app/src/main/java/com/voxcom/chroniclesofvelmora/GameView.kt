@@ -421,7 +421,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             // Remove enemy if hit
             for (enemy in enemies) {
                 if (strike.isCollidingWithEnemy(enemy)) {
-                    enemies.remove(enemy)
+                    enemy.kill()
                     strike.isActive = false
                     break
                 }
@@ -459,6 +459,21 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                     bulletIterator.remove()
                     break
                 }
+            }
+        }
+        val enemyIterator = enemies.iterator()
+
+        while (enemyIterator.hasNext()) {
+
+            val enemy = enemyIterator.next()
+            enemy.update(deltaTime, platforms, player) { x, y, dir ->
+                enemyBullets.add(
+                    EnemyBullet(context, x, y, dir)
+                )
+            }
+
+            if (enemy.isRemoved) {
+                enemyIterator.remove()
             }
         }
     }
