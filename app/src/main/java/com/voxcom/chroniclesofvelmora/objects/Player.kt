@@ -15,18 +15,56 @@ class Player(
 
     private val originalBitmap = BitmapFactory.decodeResource(
         context.resources,
-        R.drawable.sample_player
+        R.drawable.baseplayer
     )
 
-    private val bitmap: Bitmap = Bitmap.createScaledBitmap(
-        originalBitmap,
-        200,
-        200,
+    private val bodyBitmap = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.basebody),
+        140,
+        220,
         false
     )
 
-    private val width = bitmap.width.toFloat()
-    private val height = bitmap.height.toFloat()
+    private val armBitmap = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.basehandgun),
+        140,
+        220,
+        false
+    )
+
+    // -------- JETPACK FRAMES --------
+
+    private val idleJetpack = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.basejet),
+        140,
+        220,
+        false
+    )
+
+    private val rocket1 = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.rocket_fire1),
+        140,
+        220,
+        false
+    )
+
+    private val rocket2 = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.rocket_fire2),
+        140,
+        220,
+        false
+    )
+
+    private val rocket3 = Bitmap.createScaledBitmap(
+        BitmapFactory.decodeResource(context.resources, R.drawable.rocket_fire3),
+        140,
+        220,
+        false
+    )
+
+    private val width = bodyBitmap.width.toFloat()
+    private val height = bodyBitmap.height.toFloat()
+
 
     // Movement tuning
     private val moveAcceleration = 800f
@@ -40,7 +78,15 @@ class Player(
     private var velocityY = 0f
 
     private var isOnGround = false
+    private var facingDirection = 1f
 
+    private var jetpackActive = false
+
+    private var animationTimer = 0f
+    private val animationSpeed = 0.08f
+    private var animationIndex = 0
+
+    private val flyingFrames = listOf(rocket1, rocket2, rocket3)
     fun update(
         deltaTime: Float,
         platforms: List<Platform>,
@@ -48,23 +94,33 @@ class Player(
         moveY: Float
     ) {
 
-        // ---------------- INPUT ----------------
-
         val controlFactor = if (isOnGround) 1f else airControlFactor
 
         velocityX += moveX * moveAcceleration * controlFactor * deltaTime
 
-        // Clamp horizontal speed
         velocityX = velocityX.coerceIn(-maxSpeed, maxSpeed)
 
-        // Jetpack / Gravity
         if (moveY < -0.2f) {
             velocityY += jetpackForce * deltaTime
+            jetpackActive = true
         } else {
             velocityY += gravity * deltaTime
+            jetpackActive = false
         }
+        if (jetpackActive) {
+            animationTimer += deltaTime
 
-        // ---------------- HORIZONTAL MOVE ----------------
+            if (animationTimer >= animationSpeed) {
+                animationIndex++
+                if (animationIndex >= flyingFrames.size) {
+                    animationIndex = 0
+                }
+                animationTimer = 0f
+            }
+        } else {
+            animationIndex = 0
+            animationTimer = 0f
+        }
 
         worldX += velocityX * deltaTime
 
@@ -81,8 +137,6 @@ class Player(
                 velocityX = 0f
             }
         }
-
-        // ---------------- VERTICAL MOVE ----------------
 
         worldY += velocityY * deltaTime
         isOnGround = false
@@ -102,11 +156,22 @@ class Player(
             }
         }
 
-        // ---------------- FRICTION ----------------
-
         if (isOnGround && moveX == 0f) {
             velocityX *= 0.8f
         }
+        if (moveX > 0) facingDirection = 1f
+        if (moveX < 0) facingDirection = -1f
+    }
+    var maxHealth = 100
+    var currentHealth = 100
+
+    fun takeDamage(amount: Int) {
+        currentHealth -= amount
+        if (currentHealth < 0) currentHealth = 0
+    }
+
+    fun isDead(): Boolean {
+        return currentHealth <= 0
     }
     private fun isColliding(platform: Platform): Boolean {
 
@@ -127,9 +192,27 @@ class Player(
     }
 
     fun draw(canvas: Canvas, camera: Camera) {
+
         val screenX = worldX - camera.cameraX
         val screenY = worldY - camera.cameraY
 
-        canvas.drawBitmap(bitmap, screenX, screenY, null)
+        // 1️⃣ Jetpack (back layer)
+        // -------- JETPACK --------
+        val jetpackBitmap = if (jetpackActive) {
+            flyingFrames[animationIndex]
+        } else {
+            idleJetpack
+        }
+
+        canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
+
+        // 2️⃣ Body (middle)
+        canvas.drawBitmap(bodyBitmap, screenX, screenY, null)
+
+        // 3️⃣ Arm + Gun (front)
+        canvas.drawBitmap(armBitmap, screenX, screenY, null)
+    }
+    fun getFacingDirection(): Float {
+        return if (velocityX >= 0f) 1f else -1f
     }
 }

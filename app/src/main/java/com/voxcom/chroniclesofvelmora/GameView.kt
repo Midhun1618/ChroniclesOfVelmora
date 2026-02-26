@@ -12,6 +12,7 @@ import com.voxcom.chroniclesofvelmora.objects.Enemy
 import com.voxcom.chroniclesofvelmora.objects.Joystick
 import com.voxcom.chroniclesofvelmora.objects.Platform
 import com.voxcom.chroniclesofvelmora.objects.Player
+import com.voxcom.chroniclesofvelmora.objects.Strike
 import com.voxcom.chroniclesofvelmora.utils.Camera
 
 class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback {
@@ -24,12 +25,18 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private lateinit var bgMid: Bitmap
 
     private val enemies = mutableListOf<Enemy>()
-
+    private val strike = mutableListOf<Strike>()
     private val platforms = mutableListOf<Platform>()
     private lateinit var leftJoystick: Joystick
 
     private val mapWidth = 6330f
     private val mapHeight = 4200f
+    private var maxAmmo = 3
+    private var currentAmmo = 3
+
+    private var reloadTime = 1.5f
+    private var reloadTimer = 0f
+    private var isReloading = false
 
     init {
         holder.addCallback(this)
@@ -392,6 +399,40 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         for (enemy in enemies) {
             enemy.update(deltaTime, platforms)
         }
+
+        val iterator = strike.iterator()
+        while (iterator.hasNext()) {
+            val strike = iterator.next()
+            strike.update(deltaTime)
+
+            // Remove if hits platform
+            for (platform in platforms) {
+                if (strike.isCollidingWithPlatform(platform)) {
+                    strike.isActive = false
+                }
+            }
+
+            // Remove enemy if hit
+            for (enemy in enemies) {
+                if (strike.isCollidingWithEnemy(enemy)) {
+                    enemies.remove(enemy)
+                    strike.isActive = false
+                    break
+                }
+            }
+
+            if (!strike.isActive) {
+                iterator.remove()
+            }
+        }
+        // Reload logic
+        if (isReloading) {
+            reloadTimer += deltaTime
+            if (reloadTimer >= reloadTime) {
+                currentAmmo = maxAmmo
+                isReloading = false
+            }
+        }
     }
 
     override fun draw(canvas: Canvas) {
@@ -410,18 +451,92 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         for (enemy in enemies) {
             enemy.draw(canvas, camera)
         }
+        for (strike in strike) {
+            strike.draw(canvas, camera)
+        }
 
         // Player
         player.draw(canvas, camera)
 
         // UI
         leftJoystick.draw(canvas)
+        // ================= LIFE BAR =================
+        val barWidth = 400f
+        val barHeight = 30f
+        val healthRatio = player.currentHealth.toFloat() / player.maxHealth
+
+        val paintBg = android.graphics.Paint().apply {
+            color = android.graphics.Color.DKGRAY
+        }
+
+        val paintHp = android.graphics.Paint().apply {
+            color = android.graphics.Color.RED
+        }
+
+// Background
+        canvas.drawRect(50f, 50f, 50f + barWidth, 50f + barHeight, paintBg)
+
+// Health fill
+        canvas.drawRect(
+            50f,
+            50f,
+            50f + barWidth * healthRatio,
+            50f + barHeight,
+            paintHp
+        )
+        // ================= AMMO DISPLAY =================
+        val ammoPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.YELLOW
+            textSize = 50f
+        }
+
+        canvas.drawText(
+            "Ammo: $currentAmmo",
+            50f,
+            130f,
+            ammoPaint
+        )
+
+        if (isReloading) {
+            canvas.drawText(
+                "Reloading...",
+                50f,
+                190f,
+                ammoPaint
+            )
+        }
     }
+
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN,
+
+            MotionEvent.ACTION_DOWN -> {
+
+                if (event.x > width / 2) {
+
+                    if (currentAmmo > 0 && !isReloading) {
+
+                        strike.add(
+                            Strike(
+                                context,
+                                player.worldX + 60f,
+                                player.worldY + 60f,
+                                player.getFacingDirection()
+                            )
+                        )
+
+                        currentAmmo--
+
+                        if (currentAmmo == 0) {
+                            isReloading = true
+                            reloadTimer = 0f
+                        }
+                    }
+                }
+            }
+
             MotionEvent.ACTION_MOVE -> {
                 leftJoystick.setActuator(event.x, event.y)
             }
