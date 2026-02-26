@@ -79,6 +79,7 @@ class Player(
 
     private var isOnGround = false
     private var facingDirection = 1f
+    private var facingRight = true
 
     private var jetpackActive = false
 
@@ -161,7 +162,14 @@ class Player(
         }
         if (moveX > 0) facingDirection = 1f
         if (moveX < 0) facingDirection = -1f
+
+        if (moveX > 0.1f) {
+            facingRight = true
+        } else if (moveX < -0.1f) {
+            facingRight = false
+        }
     }
+
     var maxHealth = 100
     var currentHealth = 100
 
@@ -196,7 +204,18 @@ class Player(
         val screenX = worldX - camera.cameraX
         val screenY = worldY - camera.cameraY
 
-        // 1️⃣ Jetpack (back layer)
+        canvas.save()
+
+        if (!facingRight) {
+            // Flip horizontally
+            canvas.scale(
+                -1f,
+                1f,
+                screenX + width / 2,
+                0f
+            )
+        }
+
         // -------- JETPACK --------
         val jetpackBitmap = if (jetpackActive) {
             flyingFrames[animationIndex]
@@ -206,11 +225,13 @@ class Player(
 
         canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
 
-        // 2️⃣ Body (middle)
+        // -------- BODY --------
         canvas.drawBitmap(bodyBitmap, screenX, screenY, null)
 
-        // 3️⃣ Arm + Gun (front)
+        // -------- ARM --------
         canvas.drawBitmap(armBitmap, screenX, screenY, null)
+
+        canvas.restore()
     }
     fun getFacingDirection(): Float {
         return if (velocityX >= 0f) 1f else -1f
