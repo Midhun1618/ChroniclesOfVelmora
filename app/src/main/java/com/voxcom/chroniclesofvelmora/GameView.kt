@@ -545,7 +545,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
             MotionEvent.ACTION_DOWN -> {
 
-                if (event.x > width / 2) {
+                if (event.x > width / 2 && !player.isDead()) {
 
                     if (currentAmmo > 0 && !isReloading) {
 

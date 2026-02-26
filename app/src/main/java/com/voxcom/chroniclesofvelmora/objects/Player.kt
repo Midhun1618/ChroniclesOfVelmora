@@ -73,6 +73,45 @@ class Player(
             140, 220, false
         )
     )
+    // -------- DEATH BODY FRAMES --------
+    private val deathBodyFrames = listOf(
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.body_dead1),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.body_dead2),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.body_dead3),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.body_dead4),
+            140, 220, false
+        ),
+    )
+
+    // -------- DEATH ARM FRAMES --------
+    private val deathArmFrames = listOf(
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.arm_dead1),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.arm_dead2),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.arm_dead3),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.arm_dead3),
+            140, 220, false
+        ),
+    )
 
     private val armBitmap = Bitmap.createScaledBitmap(
         BitmapFactory.decodeResource(context.resources, R.drawable.basehandgun),
@@ -113,7 +152,7 @@ class Player(
 
     private val width = idleBody.width.toFloat()
     private val height = idleBody.height.toFloat()
-    private enum class State { NORMAL, HIT }
+    private enum class State { NORMAL, HIT ,DEAD}
 
     private var state = State.NORMAL
 
@@ -143,6 +182,9 @@ class Player(
     private var animationTimer = 0f
     private val animationSpeed = 0.1f
     private var animationIndex = 0
+    private var deathIndex = 0
+    private var deathTimer = 0f
+    private val deathAnimSpeed = 0.1f
 
     private val flyingFrames = listOf(rocket1, rocket2, rocket3)
     fun update(
@@ -151,6 +193,23 @@ class Player(
         moveX: Float,
         moveY: Float
     ) {
+        // -------- DEATH ANIMATION --------
+        if (state == State.DEAD) {
+
+            deathTimer += deltaTime
+
+            if (deathTimer >= deathAnimSpeed) {
+                deathIndex++
+                deathTimer = 0f
+
+                if (deathIndex >= deathBodyFrames.size) {
+                    deathIndex = deathBodyFrames.size - 1
+                }
+            }
+
+            return   // Stop all movement + animations
+        }
+
 
         val controlFactor = if (isOnGround) 1f else airControlFactor
 
@@ -278,12 +337,21 @@ class Player(
 
     fun takeDamage(amount: Int) {
 
+        if ( state == State.DEAD) return
+
         currentHealth -= amount
-        if (currentHealth < 0) currentHealth = 0
+        if (currentHealth <= 0) {
+            currentHealth = 0
+            state = State.DEAD
+            deathIndex = 0
+            deathTimer = 0f
+            return
+        }
 
         state = State.HIT
         hitIndex = 0
         hitTimer = 0f
+
     }
 
     fun isDead(): Boolean {
@@ -314,9 +382,7 @@ class Player(
 
         canvas.save()
 
-
         if (!facingRight) {
-            // Flip horizontally
             canvas.scale(
                 -1f,
                 1f,
@@ -326,33 +392,46 @@ class Player(
         }
 
         // -------- JETPACK --------
-        val jetpackBitmap = if (jetpackActive) {
-            flyingFrames[animationIndex]
-        } else {
-            idleJetpack
+        if (state != State.DEAD) {
+            val jetpackBitmap = if (jetpackActive) {
+                flyingFrames[animationIndex]
+            } else {
+                idleJetpack
+            }
+
+            canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
         }
 
-        canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
+        // -------- BODY + ARM --------
+        when (state) {
 
-        // -------- BODY --------
-        val bodyToDraw = when (state) {
-            State.HIT -> hitFrames[hitIndex]
+            State.DEAD -> {
+                val bodyFrame = deathBodyFrames[deathIndex]
+                val armFrame = deathArmFrames[deathIndex]
+
+                canvas.drawBitmap(bodyFrame, screenX, screenY, null)
+                canvas.drawBitmap(armFrame, screenX, screenY, null)
+            }
+
+            State.HIT -> {
+                canvas.drawBitmap(hitFrames[hitIndex], screenX, screenY, null)
+                canvas.drawBitmap(armBitmap, screenX, screenY, null)
+            }
+
             else -> {
-                if (kotlin.math.abs(velocityX) > 10f && isOnGround) {
-                    walkFrames[walkIndex]
-                } else {
-                    idleBody
-                }
+                val bodyToDraw =
+                    if (kotlin.math.abs(velocityX) > 10f && isOnGround) {
+                        walkFrames[walkIndex]
+                    } else {
+                        idleBody
+                    }
+
+                canvas.drawBitmap(bodyToDraw, screenX, screenY, null)
+                canvas.drawBitmap(armBitmap, screenX, screenY, null)
             }
         }
 
-        canvas.drawBitmap(bodyToDraw, screenX, screenY, null)
-
-        // -------- ARM --------
-        canvas.drawBitmap(armBitmap, screenX, screenY, null)
-
         canvas.restore()
-
     }
     fun getFacingDirection(): Float {
         return if (velocityX >= 0f) 1f else -1f
