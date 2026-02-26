@@ -12,17 +12,40 @@ class Player(
     var worldX: Float,
     var worldY: Float
 ) {
+    private var walkIndex = 0
+    private var walkTimer = 0f
+    private val walkSpeed = 0.08f   // smaller = faster animation
 
-    private val originalBitmap = BitmapFactory.decodeResource(
-        context.resources,
-        R.drawable.baseplayer
-    )
-
-    private val bodyBitmap = Bitmap.createScaledBitmap(
+    // -------- IDLE BODY --------
+    private val idleBody = Bitmap.createScaledBitmap(
         BitmapFactory.decodeResource(context.resources, R.drawable.basebody),
         140,
         220,
         false
+    )
+
+    // -------- WALK FRAMES --------
+    private val walkFrames = listOf(
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.basewalk1),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.basewalk2),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.basewalk3),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.basewalk4),
+            140, 220, false
+        ),
+        Bitmap.createScaledBitmap(
+            BitmapFactory.decodeResource(context.resources, R.drawable.basewalk5),
+            140, 220, false
+        )
     )
 
     private val armBitmap = Bitmap.createScaledBitmap(
@@ -62,8 +85,8 @@ class Player(
         false
     )
 
-    private val width = bodyBitmap.width.toFloat()
-    private val height = bodyBitmap.height.toFloat()
+    private val width = idleBody.width.toFloat()
+    private val height = idleBody.height.toFloat()
 
 
     // Movement tuning
@@ -84,7 +107,7 @@ class Player(
     private var jetpackActive = false
 
     private var animationTimer = 0f
-    private val animationSpeed = 0.08f
+    private val animationSpeed = 0.1f
     private var animationIndex = 0
 
     private val flyingFrames = listOf(rocket1, rocket2, rocket3)
@@ -168,7 +191,25 @@ class Player(
         } else if (moveX < -0.1f) {
             facingRight = false
         }
+
+        val isMoving = kotlin.math.abs(moveX) > 0.1f && isOnGround
+
+        if (isMoving) {
+            walkTimer += deltaTime
+
+            if (walkTimer >= walkSpeed) {
+                walkIndex++
+                if (walkIndex >= walkFrames.size) {
+                    walkIndex = 0
+                }
+                walkTimer = 0f
+            }
+        } else {
+            walkIndex = 0
+            walkTimer = 0f
+        }
     }
+
 
     var maxHealth = 100
     var currentHealth = 100
@@ -226,7 +267,13 @@ class Player(
         canvas.drawBitmap(jetpackBitmap, screenX, screenY, null)
 
         // -------- BODY --------
-        canvas.drawBitmap(bodyBitmap, screenX, screenY, null)
+        val bodyToDraw = if (kotlin.math.abs(velocityX) > 10f && isOnGround) {
+            walkFrames[walkIndex]
+        } else {
+            idleBody
+        }
+
+        canvas.drawBitmap(bodyToDraw, screenX, screenY, null)
 
         // -------- ARM --------
         canvas.drawBitmap(armBitmap, screenX, screenY, null)

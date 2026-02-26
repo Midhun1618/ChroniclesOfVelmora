@@ -58,7 +58,7 @@ class Strike(
     fun draw(canvas: Canvas, camera: Camera) {
 
         val screenX = worldX - camera.cameraX
-        val screenY = worldY - camera.cameraY
+        val screenY = worldY - camera.cameraY+40
 
         val matrix = Matrix()
 
