@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.media.MediaPlayer
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -16,6 +17,7 @@ import com.voxcom.chroniclesofvelmora.objects.Platform
 import com.voxcom.chroniclesofvelmora.objects.Player
 import com.voxcom.chroniclesofvelmora.objects.Strike
 import com.voxcom.chroniclesofvelmora.utils.Camera
+import com.voxcom.chroniclesofvelmora.utils.SoundManager
 
 class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback {
 
@@ -25,6 +27,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
     private lateinit var bgFar: Bitmap
     private lateinit var bgMid: Bitmap
+    private lateinit var soundManager: SoundManager
+    private var musicPlayer: MediaPlayer? = null
     private var spawnTimer = 0f
     private val spawnInterval = 15f
 
@@ -390,6 +394,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        soundManager = SoundManager(context)
         val screenHeight = height.toFloat()
 
         leftJoystick = Joystick(
@@ -398,7 +403,11 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             180f,
             80f
         )
-
+        if (musicPlayer == null) {
+            musicPlayer = MediaPlayer.create(context, R.raw.bgm)
+            musicPlayer?.isLooping = true
+            musicPlayer?.start()
+        }
         gameLoop.startLoop()
     }
 
@@ -406,6 +415,10 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         gameLoop.stopLoop()
+        soundManager.release()
+        musicPlayer?.release()
+        musicPlayer = null
+
     }
 
     fun update(deltaTime: Float) {
@@ -415,13 +428,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
 
         player.update(deltaTime, platforms, moveX, moveY)
         camera.update(player)
-        for (enemy in enemies) {
-            enemy.update(deltaTime, platforms, player) { x, y, direction ->
-                enemyBullets.add(
-                    EnemyBullet(context, x, y, direction)
-                )
-            }
-        }
         val particleIterator = particles.iterator()
 
         while (particleIterator.hasNext()) {
@@ -458,6 +464,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             for (enemy in enemies) {
                 if (strike.isCollidingWithEnemy(enemy)) {
                     enemy.kill()
+                    soundManager.playExplosion()
 
                     repeat(30) {
                         particles.add(
@@ -494,6 +501,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             // Hit player
             if (bullet.isCollidingWithPlayer(player)) {
                 player.takeDamage(10)
+                soundManager.playHit()
                 bulletIterator.remove()
                 continue
             }
@@ -520,6 +528,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             if (enemy.isRemoved) {
                 enemyIterator.remove()
             }
+        }
+        if (player.isJetpackActive()) {
+            soundManager.playJetpack()
         }
     }
 
@@ -613,6 +624,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                     if (currentAmmo > 0 && !isReloading) {
 
                         strike.add(
+
                             Strike(
                                 context,
                                 player.worldX + 60f,
@@ -620,11 +632,13 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
                                 player.getFacingDirection()
                             )
                         )
+                        soundManager.playShoot()
 
                         currentAmmo--
 
                         if (currentAmmo == 0) {
                             isReloading = true
+                            soundManager.playReload()
                             reloadTimer = 0f
                         }
                     }

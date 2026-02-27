@@ -436,4 +436,7 @@ class Player(
     fun getFacingDirection(): Float {
         return if (velocityX >= 0f) 1f else -1f
     }
+    fun isJetpackActive(): Boolean {
+        return jetpackActive
+    }
 }
