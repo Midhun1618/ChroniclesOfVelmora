@@ -31,6 +31,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
     private var musicPlayer: MediaPlayer? = null
     private var spawnTimer = 0f
     private val spawnInterval = 15f
+    private var jetpackSoundPlaying = false
 
     private val enemies = mutableListOf<Enemy>()
     private val strike = mutableListOf<Strike>()
@@ -406,6 +407,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         if (musicPlayer == null) {
             musicPlayer = MediaPlayer.create(context, R.raw.bgm)
             musicPlayer?.isLooping = true
+            musicPlayer?.setVolume(0.2f, 0.2f)
             musicPlayer?.start()
         }
         gameLoop.startLoop()
@@ -530,7 +532,14 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
             }
         }
         if (player.isJetpackActive()) {
-            soundManager.playJetpack()
+
+            if (!jetpackSoundPlaying) {
+                soundManager.playJetpack()
+                jetpackSoundPlaying = true
+            }
+
+        } else {
+            jetpackSoundPlaying = false
         }
     }
 

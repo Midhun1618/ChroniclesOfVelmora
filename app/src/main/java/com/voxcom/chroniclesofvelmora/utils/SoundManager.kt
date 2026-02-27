@@ -28,7 +28,7 @@ class SoundManager(context: Context) {
         shootSound = soundPool.load(context, R.raw.shoot, 1)
         hitSound = soundPool.load(context, R.raw.hit, 1)
         explosionSound = soundPool.load(context, R.raw.explosion1, 1)
-        jetpackSound = soundPool.load(context, R.raw.jetpack, 1)
+        jetpackSound = soundPool.load(context, R.raw.jetflame, 1)
         reloadSound = soundPool.load(context, R.raw.reload, 1)
     }
 
